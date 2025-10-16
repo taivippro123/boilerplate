@@ -1,103 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
-import roadmapData from '/roadmap.json'
-
-const TILE_SIZE = 64
-const MAP_WIDTH = roadmapData.width
-const MAP_HEIGHT = roadmapData.height
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function App() {
-  const canvasRef = useRef(null)
-  const [tilesLoaded, setTilesLoaded] = useState(false)
-  const tilesRef = useRef({})
-
-  // Load tiles
-  useEffect(() => {
-    // Get unique tile IDs from ALL layers
-    const allTiles = new Set()
-    roadmapData.layers.forEach(layer => {
-      layer.data.forEach(tile => {
-        if (tile > 0) allTiles.add(tile)
-      })
-    })
-    const tilesToLoad = [...allTiles]
-    
-    const loadPromises = tilesToLoad.map(tileNum => {
-      return new Promise((resolve) => {
-        const img = new Image()
-        img.onload = () => {
-          // Just store the original image - PNG alpha will be preserved
-          tilesRef.current[tileNum] = img
-          resolve()
-        }
-        img.onerror = () => resolve()
-        // IMPORTANT: Set crossOrigin before src to preserve alpha
-        img.crossOrigin = 'anonymous'
-        img.src = `/tiles/mapTile_${String(tileNum).padStart(3, '0')}.png`
-      })
-    })
-
-    Promise.all(loadPromises).then(() => {
-      setTilesLoaded(true)
-    })
-  }, [])
-
-  // Draw map
-  useEffect(() => {
-    if (!tilesLoaded || !canvasRef.current) return
-
-    const canvas = canvasRef.current
-    // Enable alpha channel and disable image smoothing for pixel-perfect rendering
-    const ctx = canvas.getContext('2d', { 
-      alpha: true,
-      willReadFrequently: false 
-    })
-    
-    // Disable smoothing for crisp pixel art
-    ctx.imageSmoothingEnabled = false
-    
-    // Set composite operation to properly handle transparency
-    ctx.globalCompositeOperation = 'source-over'
-    
-    // Clear canvas to transparent
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw ALL layers from roadmap.json in order (bottom to top)
-    roadmapData.layers.forEach((layer, layerIndex) => {
-      const mapData = layer.data
-      
-      for (let y = 0; y < MAP_HEIGHT; y++) {
-        for (let x = 0; x < MAP_WIDTH; x++) {
-          const index = y * MAP_WIDTH + x
-          const tileNum = mapData[index]
-          
-          if (tileNum && tileNum > 0) {
-            const img = tilesRef.current[tileNum]
-            if (img) {
-              // Draw tile - alpha channel will be respected
-              ctx.save()
-              ctx.drawImage(img, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-              ctx.restore()
-            }
-          }
-        }
-      }
-    })
-  }, [tilesLoaded])
-
   return (
-    <div className="w-screen h-screen overflow-hidden flex items-center justify-center">
-      {!tilesLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-gray-800 text-2xl">Loading...</p>
-        </div>
-      )}
-      
-      <canvas
-        ref={canvasRef}
-        width={MAP_WIDTH * TILE_SIZE}
-        height={MAP_HEIGHT * TILE_SIZE}
-        style={{ background: 'transparent', display: 'block' }}
-      />
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 p-4">
+      {/* Tiêu đề Tailwind */}
+      <h1 className="text-4xl font-bold text-primary">
+        🚀 Tailwind + shadcn/ui Test
+      </h1>
+
+      {/* Nút shadcn */}
+      <Button className="bg-primary text-white hover:bg-primary/90">
+        Nút Primary
+      </Button>
+
+      <Button className="bg-secondary text-white hover:bg-secondary/90">
+        Nút Secondary
+      </Button>
+
+      {/* Card shadcn */}
+      <Card className="w-80">
+        <CardHeader>
+          <CardTitle className="text-primary">Thẻ kiểm tra</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">
+            Màu primary là xanh lá #009DA5 và màu secondary là xanh dương #0D6CE8
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
